@@ -14,7 +14,7 @@ const db = pgp(connectionString);
 //TODO: common response sections with a function
 function getAllNotes(req, res) {
   db.any('select * from notes')
-    .then(function (data) {
+    .then(data => {
       res.status(200)
         .json({
           data: data,
@@ -22,7 +22,7 @@ function getAllNotes(req, res) {
           message: ''
         });
     })
-    .catch(function (err) {
+    .catch(err => {
       console.log(err);
       res.status(400)
         .json({
@@ -31,6 +31,29 @@ function getAllNotes(req, res) {
           message: 'Failed to retrieve notes.'
         });
     });
+}
+
+function createNote(req, res) {
+  db.none('insert into notes(user_id, title, content) values(${userId}, ${title}, ${content})', req.body)
+    .then(() => {
+      res.status(201)
+        .json({
+          status: 'success',
+          message: ''
+        });
+    })
+    .catch(err => {
+      res.status(400)
+        .json({
+          status: 'error',
+          message: 'Failed to create note.'
+        })
+    });
+}
+
+function parseQueryString(req) {
+  const queryString = req.query;
+  //TODO: more
 }
 
 module.exports = {
