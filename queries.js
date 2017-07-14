@@ -6,9 +6,9 @@ const options = {
   promiseLib: promise
 };
 
-// const pgp = require('pg-promise')(options);
-// const connectionString = process.env.DATABASE_URL;
-// const db = pgp(connectionString);
+const pgp = require('pg-promise')(options);
+const connectionString = process.env.DATABASE_URL;
+const db = pgp(connectionString);
 
 function getAllNotes(req, res) {
   console.log(req.query);
