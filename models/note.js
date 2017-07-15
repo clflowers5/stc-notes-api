@@ -13,23 +13,25 @@ const db = pgp(connectionString);
 //TODO: query params with req.query
 //TODO: common response sections with a function
 function getAllNotes(req, res) {
-  db.any('select * from notes')
+  const defaults = {
+    limit: 'all',
+    order: 'desc',
+    start: 0
+  };
+
+  const limit = req.query.limit || defaults.limit;
+  const order = req.query.order || defaults.order;
+  const offset = req.query.start - 1 || defaults.start;
+  //TODO: finish the order by, was getting weird errors last night
+  db.any('select * from notes order by created_date $1 limit $2 offset $3', [order, limit, offset])
     .then(data => {
       res.status(200)
-        .json({
-          data: data,
-          status: 'success',
-          message: ''
-        });
+        .json(success(data));
     })
     .catch(err => {
       console.log(err);
       res.status(400)
-        .json({
-          data: {},
-          status: 'error',
-          message: 'Failed to retrieve notes.'
-        });
+        .json(error('Failed to retrieve notes.'));
     });
 }
 
@@ -37,19 +39,11 @@ function getNote(req, res) {
   db.one('select * from notes where id = ${id}', req.params)
     .then(data => {
       res.status(200)
-        .json({
-          data: data,
-          status: 'success',
-          message: ''
-        });
+        .json(success(data));
     })
     .catch(err => {
       res.status(404)
-        .json({
-          data: {},
-          status: 'error',
-          message: 'Note does not exist.'
-        });
+        .json(error('Note does not exist.'));
     });
 }
 
@@ -58,36 +52,25 @@ function updateNote(req, res) {
   db.none('update notes set title = $1, content = $2 where id = $3', [req.body.title, req.body.content, req.params.id])
     .then(() => {
       res.status(200)
-        .json();
+        .json(success());
     })
     .catch(err => {
       console.log(err);
       res.status(400)
-        .json({
-          data: {},
-          status: 'error',
-          message: 'Failed to update note.'
-        });
+        .json(error('Failed to update note.'));
     });
 }
 
 function createNote(req, res) {
-  //TODO: need to do validation on the req body
   db.none('insert into notes(user_id, title, content) values(${userId}, ${title}, ${content})', req.body)
     .then(() => {
       res.status(201)
-        .json({
-          status: 'success',
-          message: ''
-        });
+        .json(success());
     })
     .catch(err => {
       console.log(err);
       res.status(400)
-        .json({
-          status: 'error',
-          message: 'Failed to create note.'
-        });
+        .json(error('Failed to create note.'));
     });
 }
 
@@ -100,16 +83,33 @@ function deleteNote(req, res) {
     .catch(err => {
       console.log(err);
       res.status(400)
-        .json({
-          status: 'error',
-          message: 'Failed to delete note.'
-        });
+        .json(error('Failed to delete note.'));
     });
 }
 
-function parseQueryString(req) {
-  const queryString = req.query;
-  //TODO: more
+/**
+ * Success json response formatter
+ * @param data
+ * @returns {{data: {}, status: string, message: string}}
+ */
+function success(data = {}) {
+  return {
+    data: data,
+    status: 'success',
+    message: ''
+  };
+}
+
+/**
+ * Error json response formatter
+ * @param message
+ * @returns {{status: string, message: *}}
+ */
+function error(message) {
+  return {
+    status: 'error',
+    message: message
+  };
 }
 
 module.exports = {

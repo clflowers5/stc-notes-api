@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const db = require('../queries');
+const db = require('../models/note');
 
 router.get('/api/notes', db.getAllNotes);
 router.get('/api/notes/:id', db.getNote);
