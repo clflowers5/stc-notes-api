@@ -10,8 +10,6 @@ const pgp = require('pg-promise')(options);
 const connectionString = process.env.DATABASE_URL + '?ssl=true';
 const db = pgp(connectionString);
 
-//TODO: query params with req.query
-//TODO: common response sections with a function
 function getAllNotes(req, res) {
   const defaults = {
     limit: 'all',
@@ -22,11 +20,11 @@ function getAllNotes(req, res) {
   const limit = req.query.limit || defaults.limit;
   const order = req.query.order || defaults.order;
   const offset = req.query.start - 1 || defaults.start;
-  //TODO: finish the order by, was getting weird errors last night
-  db.any('select * from notes order by created_date $1 limit $2 offset $3', [order, limit, offset])
+
+  db.any('select * from notes order by created_date $1:raw limit $2:raw offset $3', [order, limit, offset])
     .then(data => {
       res.status(200)
-        .json(success(data));
+        .json(success('Retrieved notes.', data));
     })
     .catch(err => {
       console.log(err);
@@ -39,7 +37,7 @@ function getNote(req, res) {
   db.one('select * from notes where id = ${id}', req.params)
     .then(data => {
       res.status(200)
-        .json(success(data));
+        .json(success('Retrieved note.', data));
     })
     .catch(err => {
       res.status(404)
@@ -52,7 +50,7 @@ function updateNote(req, res) {
   db.none('update notes set title = $1, content = $2 where id = $3', [req.body.title, req.body.content, req.params.id])
     .then(() => {
       res.status(200)
-        .json(success());
+        .json(success('Updated note.'));
     })
     .catch(err => {
       console.log(err);
@@ -65,7 +63,7 @@ function createNote(req, res) {
   db.none('insert into notes(user_id, title, content) values(${userId}, ${title}, ${content})', req.body)
     .then(() => {
       res.status(201)
-        .json(success());
+        .json(success('Created note.'));
     })
     .catch(err => {
       console.log(err);
@@ -78,7 +76,7 @@ function deleteNote(req, res) {
   db.none('delete from notes where id = ${id}', req.params)
     .then(() => {
       res.status(200)
-        .json();
+        .json(success('Deleted note.'));
     })
     .catch(err => {
       console.log(err);
@@ -89,14 +87,15 @@ function deleteNote(req, res) {
 
 /**
  * Success json response formatter
+ * @param message
  * @param data
  * @returns {{data: {}, status: string, message: string}}
  */
-function success(data = {}) {
+function success(message = '', data = {}) {
   return {
     data: data,
     status: 'success',
-    message: ''
+    message: message
   };
 }
 
