@@ -60,10 +60,10 @@ function updateNote(req, res) {
 }
 
 function createNote(req, res) {
-  db.none('insert into notes(user_id, title, content) values(${userId}, ${title}, ${content})', req.body)
-    .then(() => {
+  db.any('insert into notes(user_id, title, content) values(${userId}, ${title}, ${content}) returning *', req.body)
+    .then(data => {
       res.status(201)
-        .json(success('Created note.'));
+        .json(success('Created note.', data));
     })
     .catch(err => {
       console.log(err);
