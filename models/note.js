@@ -60,7 +60,7 @@ function updateNote(req, res) {
 }
 
 function createNote(req, res) {
-  db.any('insert into notes(user_id, title, content) values(${userId}, ${title}, ${content}) returning *', req.body)
+  db.one('insert into notes(user_id, title, content) values(${userId}, ${title}, ${content}) returning *', req.body)
     .then(data => {
       res.status(201)
         .json(success('Created note.', data));
